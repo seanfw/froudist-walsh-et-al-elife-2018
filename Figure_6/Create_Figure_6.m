@@ -51,12 +51,6 @@ modules_list_pre_no_hipp = most_common_module_mat(:,1);
 modules_list_3month_no_hipp = most_common_module_mat(:,2);
 modules_list_1year_no_hipp = most_common_module_mat(:,3);
 
-%% Calculate participation coefficient at each timepoint
-[part_coeff_pos_pre, part_coeff_neg_pre] = participation_coef_sign(conn_matrix_mean_pre_no_hipp,modules_list_pre_no_hipp);
-[part_coeff_pos_3month, part_coeff_neg_3month] = participation_coef_sign(conn_matrix_mean_3month_no_hipp,modules_list_3month_no_hipp);
-[part_coeff_pos_1year, part_coeff_neg_1year] = participation_coef_sign(conn_matrix_mean_1year_no_hipp,modules_list_1year_no_hipp);
-
- 
 %% reorder timepoint 1 modules to match colours in figure
 TCs_L_index = strmatch('TCs_L', region_names_Shen_sequential_no_hipp, 'exact');
 PMCdl_R_index = strmatch('PMCdl_R', region_names_Shen_sequential_no_hipp, 'exact');

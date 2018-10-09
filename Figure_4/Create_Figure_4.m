@@ -10,16 +10,15 @@
 clc; clear all; close all;
 
 %% load data
-load correlated_predictors.mat
+load predictors.mat
 load atlas_areas_no_hipp_amyg.mat
 load conn_matrix_no_hipp.mat
 
 
-%% Calculate modules and participation coefficient at current lambda
+%% Calculate modules, participation coefficient and hubness at current lambda
 
 lambda = 1;
 
-    
 [modules_list_pre_no_hipp,~] = community_louvain(conn_matrix_mean_pre_no_hipp,lambda,[],'negative_asym');
 [modules_list_3month_no_hipp,~] = community_louvain(conn_matrix_mean_3month_no_hipp,lambda,[],'negative_asym');
 [modules_list_1year_no_hipp,~] = community_louvain(conn_matrix_mean_1year_no_hipp,lambda,[],'negative_asym');
@@ -28,17 +27,8 @@ num_pre_modules = max(modules_list_pre_no_hipp);
 num_3month_modules = max(modules_list_3month_no_hipp);
 num_1year_modules = max(modules_list_1year_no_hipp);
 
-% Calculate participation coefficient with modules derived anew at each
-% timepoint
+% Calculate participation coefficient 
 [part_coeff_pos_pre, part_coeff_neg_pre] = participation_coef_sign(conn_matrix_mean_pre_no_hipp,modules_list_pre_no_hipp);
-[part_coeff_pos_3month, part_coeff_neg_3month] = participation_coef_sign(conn_matrix_mean_3month_no_hipp,modules_list_3month_no_hipp);
-[part_coeff_pos_1year, part_coeff_neg_1year] = participation_coef_sign(conn_matrix_mean_1year_no_hipp,modules_list_1year_no_hipp);
-
-
-% Calculate change in participation coefficient
-part_coeff_change_acute = part_coeff_pos_3month -part_coeff_pos_pre;
-part_coeff_change_chronic = part_coeff_pos_1year - part_coeff_pos_3month;
-part_coeff_change_overall= part_coeff_pos_1year -part_coeff_pos_pre;
 
 % Calculate within module connectivity
 conn_matrices_no_hipp = nan(size(conn_matrix_mean_pre_no_hipp,1),size(conn_matrix_mean_pre_no_hipp,2),3);
@@ -117,17 +107,17 @@ chronic_within_module_connectivity_Shen_order_no_amyg([right_amygdala_index_sequ
 hubness_continuous_no_amyg = hubness_continuous;
 hubness_continuous_no_amyg([right_amygdala_index_sequential left_amygdala_index_sequential],:)=[];
 
-correlated_predictors(:,3) = hubness_continuous_no_amyg;
+predictors(:,3) = hubness_continuous_no_amyg;
 
 % Feature normalise the data.
-mean_predictors_mat  = repmat(mean(correlated_predictors),num_regions_no_hipp_or_amyg,1);
-std_predictors_mat  = repmat(std(correlated_predictors),num_regions_no_hipp_or_amyg,1);
-correlated_predictors_norm = (correlated_predictors - mean_predictors_mat)./std_predictors_mat;
+mean_predictors_mat  = repmat(mean(predictors),num_regions_no_hipp_or_amyg,1);
+std_predictors_mat  = repmat(std(predictors),num_regions_no_hipp_or_amyg,1);
+predictors_norm = (predictors - mean_predictors_mat)./std_predictors_mat;
 
 %% Run stats - acute changes in within-module connectivity
 
 % Do stepwise regression.
-[b_acute_stepwise,~,~,inmodel_acute_stepwise,stats_acute_stepwise,~,~]   = stepwisefit(correlated_predictors_norm,acute_within_module_connectivity_Shen_order_no_amyg);
+[b_acute_stepwise,~,~,inmodel_acute_stepwise,stats_acute_stepwise,~,~]   = stepwisefit(predictors_norm,acute_within_module_connectivity_Shen_order_no_amyg);
 % Calculate r-squared for stepwise regression
 stats_acute_stepwise_fstat = stats_acute_stepwise.fstat;
 r_squared_acute_stepwise = 1 - (stats_acute_stepwise.SSresid/stats_acute_stepwise.SStotal)';
@@ -136,7 +126,7 @@ stats_acute_stepwise_TSAT = stats_acute_stepwise.TSTAT;
 stats_acute_stepwise_PVAL = stats_acute_stepwise.PVAL;
 
 % Create predicted points 
-within_module_acute_stepwise_prediction = stats_acute_stepwise.intercept + sum(repmat(inmodel_acute_stepwise.*stats_acute_stepwise.B',num_regions_no_hipp_or_amyg,1).*correlated_predictors_norm,2);
+within_module_acute_stepwise_prediction = stats_acute_stepwise.intercept + sum(repmat(inmodel_acute_stepwise.*stats_acute_stepwise.B',num_regions_no_hipp_or_amyg,1).*predictors_norm,2);
 
 % Decorrelate chronic from acute changes (fit GLM and find residual
 % variance in chronic changes not explained by acute changes).
@@ -159,7 +149,7 @@ acute_chronic_corrected_p = sum(rand_t_vals>table2array(glm_acute_chronic.Coeffi
 %% Run stats - chronic changes in within-module connectivity
 
 % Do stepwise regression. 
-[b_chronic_stepwise,SE,PVAL,inmodel_chronic_stepwise,stats_chronic_stepwise,NEXTSTEP,HISTORY] = stepwisefit(correlated_predictors_norm,within_module_change_chronic_residual);
+[b_chronic_stepwise,SE,PVAL,inmodel_chronic_stepwise,stats_chronic_stepwise,NEXTSTEP,HISTORY] = stepwisefit(predictors_norm,within_module_change_chronic_residual);
 stats_chronic_stepwise_fstat = stats_chronic_stepwise.fstat;
 r_squared_chronic_stepwise = 1 - (stats_chronic_stepwise.SSresid/stats_chronic_stepwise.SStotal)';
 stats_chronic_stepwise_pval = stats_chronic_stepwise.pval;
@@ -167,7 +157,7 @@ stats_chronic_stepwise_TSAT = stats_chronic_stepwise.TSTAT;
 stats_chronic_stepwise_PVAL = stats_chronic_stepwise.PVAL;
 
 %Create predicted points 
-within_module_chronic_stepwise_prediction = stats_chronic_stepwise.intercept + sum(repmat(inmodel_chronic_stepwise.*stats_chronic_stepwise.B',num_regions_no_hipp_or_amyg,1).*correlated_predictors_norm,2);
+within_module_chronic_stepwise_prediction = stats_chronic_stepwise.intercept + sum(repmat(inmodel_chronic_stepwise.*stats_chronic_stepwise.B',num_regions_no_hipp_or_amyg,1).*predictors_norm,2);
 
 %% Create nifti files 
 
@@ -295,7 +285,7 @@ saveas(myfig,'figures/within_module_chronic_medial.fig');
 %% Plot stats
 % Scatter plots coloured by hippo conn
 % Get in hipp_pre colours
-hipp_pre = correlated_predictors(:,4);
+hipp_pre = predictors(:,4);
 b2r_hipp_scale = b2r(-0.5,0.5);
 hipp_conn_color = round(250*(min(hipp_pre + 0.5,1)) + 1);
 colors_hipp_pre = b2r_hipp_scale(hipp_conn_color,:);
@@ -390,4 +380,4 @@ within_module_chronic_full_data = chronic_within_module_connectivity_Shen_order_
 betas_acute_fulldata = stats_acute_stepwise.B;
 betas_chronic_fulldata = stats_chronic_stepwise.B;
 
-save modelfits_fulldata.mat within_module_acute_full_data within_module_chronic_full_data betas_acute_fulldata betas_chronic_fulldata correlated_predictors_norm
+save modelfits_fulldata.mat within_module_acute_full_data within_module_chronic_full_data betas_acute_fulldata betas_chronic_fulldata predictors_norm

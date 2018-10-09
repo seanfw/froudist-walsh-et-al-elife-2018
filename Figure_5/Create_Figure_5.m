@@ -14,7 +14,7 @@ close all; clear all; clc;
 %% load data
 
 load monkey_DBM_mats.mat
-load correlated_predictors.mat
+load predictors.mat
 load atlas_areas_no_hipp_amyg.mat
 
 
@@ -23,17 +23,17 @@ acute_gm_plasticity = mean_three_month_dbm_no_hipp_or_amyg - mean_pre_dbm_no_hip
 chronic_gm_plasticity = mean_one_year_dbm_no_hipp_or_amyg - mean_three_month_dbm_no_hipp_or_amyg;
 year_long_gm_plasticity =  mean_one_year_dbm_no_hipp_or_amyg - mean_pre_dbm_no_hipp_or_amyg;
 
-%% Feature normalise correlated predictors
-mean_predictors_mat  = repmat(mean(correlated_predictors),num_regions_no_hipp_or_amyg,1);
-std_predictors_mat  = repmat(std(correlated_predictors),num_regions_no_hipp_or_amyg,1);
+%% Feature normalise predictors
+mean_predictors_mat  = repmat(mean(predictors),num_regions_no_hipp_or_amyg,1);
+std_predictors_mat  = repmat(std(predictors),num_regions_no_hipp_or_amyg,1);
 
-correlated_predictors_norm = (correlated_predictors - mean_predictors_mat)./std_predictors_mat;
+predictors_norm = (predictors - mean_predictors_mat)./std_predictors_mat;
 
 
 %% Run stats - acute changes in grey matter volume
 
 % Do stepwise regression.
-[b_acute_stepwise,SE,PVAL,inmodel_acute_stepwise,stats_acute_stepwise,NEXTSTEP,HISTORY] = stepwisefit(correlated_predictors_norm,acute_gm_plasticity');
+[b_acute_stepwise,SE,PVAL,inmodel_acute_stepwise,stats_acute_stepwise,NEXTSTEP,HISTORY] = stepwisefit(predictors_norm,acute_gm_plasticity');
 stats_acute_stepwise_fstat = stats_acute_stepwise.fstat;
 r_squared_acute_stepwise = 1 - (stats_acute_stepwise.SSresid/stats_acute_stepwise.SStotal)';
 stats_acute_stepwise_pval = stats_acute_stepwise.pval;
@@ -41,7 +41,7 @@ stats_acute_stepwise_TSAT = stats_acute_stepwise.TSTAT;
 stats_acute_stepwise_PVAL = stats_acute_stepwise.PVAL;
 
 % Create predicted points 
-GM_acute_stepwise_prediction = stats_acute_stepwise.intercept + sum(repmat(inmodel_acute_stepwise.*stats_acute_stepwise.B',num_regions_no_hipp_or_amyg,1).*correlated_predictors_norm,2);
+GM_acute_stepwise_prediction = stats_acute_stepwise.intercept + sum(repmat(inmodel_acute_stepwise.*stats_acute_stepwise.B',num_regions_no_hipp_or_amyg,1).*predictors_norm,2);
 
 % Get residual variance in chronic GM change not accounted for by acute
 % change
@@ -64,7 +64,7 @@ acute_chronic_corrected_p = sum(rand_t_vals>table2array(glm_acute_chronic_gm.Coe
 %% Run stats - chronic changes in grey matter volume
 
 % Do stepwise regression.
-[b_chronic_stepwise,SE,PVAL,inmodel_chronic_stepwise,stats_chronic_stepwise,NEXTSTEP,HISTORY] = stepwisefit(correlated_predictors_norm,chronic_gm_residual);
+[b_chronic_stepwise,SE,PVAL,inmodel_chronic_stepwise,stats_chronic_stepwise,NEXTSTEP,HISTORY] = stepwisefit(predictors_norm,chronic_gm_residual);
 stats_chronic_stepwise_fstat = stats_chronic_stepwise.fstat
 r_squared_chronic_stepwise = 1 - (stats_chronic_stepwise.SSresid/stats_chronic_stepwise.SStotal)'
 stats_chronic_stepwise_pval = stats_chronic_stepwise.pval
@@ -72,7 +72,7 @@ stats_chronic_stepwise_TSAT = stats_chronic_stepwise.TSTAT
 stats_chronic_stepwise_PVAL = stats_chronic_stepwise.PVAL
 
 % Create predicted points 
-GM_chronic_stepwise_prediction = stats_chronic_stepwise.intercept + sum(repmat(inmodel_chronic_stepwise.*stats_chronic_stepwise.B',num_regions_no_hipp_or_amyg,1).*correlated_predictors_norm,2);
+GM_chronic_stepwise_prediction = stats_chronic_stepwise.intercept + sum(repmat(inmodel_chronic_stepwise.*stats_chronic_stepwise.B',num_regions_no_hipp_or_amyg,1).*predictors_norm,2);
 
 
 %% Create surface images
@@ -201,7 +201,7 @@ saveas(myfig,'figures/grey_matter_chronic_medial.fig');
 
 %% Plot scatter coloured by hippocampal connectivity
 % Get in hipp_pre colours
-hipp_pre = correlated_predictors(:,4);
+hipp_pre = predictors(:,4);
 b2r_hipp_scale = b2r(-0.5,0.5);
 hipp_conn_color = round(250*(min(hipp_pre + 0.5,1)) + 1);
 colors_hipp_pre = b2r_hipp_scale(hipp_conn_color,:);
@@ -292,5 +292,5 @@ gm_chronic_full_data = chronic_gm_plasticity';
 betas_acute_fulldata = stats_acute_stepwise.B;
 betas_chronic_fulldata = stats_chronic_stepwise.B;
 
-save modelfits_fulldata.mat gm_acute_full_data gm_chronic_full_data betas_acute_fulldata betas_chronic_fulldata correlated_predictors_norm
+save modelfits_fulldata.mat gm_acute_full_data gm_chronic_full_data betas_acute_fulldata betas_chronic_fulldata predictors_norm
 

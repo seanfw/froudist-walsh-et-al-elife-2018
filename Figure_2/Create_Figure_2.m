@@ -5,7 +5,7 @@
 
 %% Load data and atlas
 
-load correlated_predictors.mat
+load predictors.mat
 load atlas_areas_no_hipp_amyg.mat
 
 %% Create nifti files 
@@ -22,10 +22,10 @@ RM_atlas_bin(non_zero_voxels) = 1;
 %%
 cd individual_regions
 
-neuron_density = correlated_predictors(:,1);
-glia_density = correlated_predictors(:,2);
-hubness = correlated_predictors(:,3);
-hipp_pre = correlated_predictors(:,4);
+neuron_density = predictors(:,1);
+glia_density = predictors(:,2);
+hubness = predictors(:,3);
+hipp_pre = predictors(:,4);
 
 neuron_density_map = RM_atlas_bin;
 glia_density_map = RM_atlas_bin;
